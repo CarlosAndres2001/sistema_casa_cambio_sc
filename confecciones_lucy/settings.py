@@ -103,7 +103,7 @@ WSGI_APPLICATION = 'confecciones_lucy.wsgi.application'
     }
 }"""
 
-DATABASES = {
+"""DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',   # Configuración para MySQL
         'NAME': 'sistema_casa_cambio',          # Nombre de tu base de datos
@@ -112,9 +112,9 @@ DATABASES = {
         'HOST': 'localhost',                    # El host donde se encuentra MySQL
         'PORT': '3306',                         # Puerto de MySQL (por defecto 3306)
     }
-}
+}"""
 
-"""
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
@@ -128,7 +128,7 @@ DATABASES = {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"
         }
     }
-}"""
+}
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
