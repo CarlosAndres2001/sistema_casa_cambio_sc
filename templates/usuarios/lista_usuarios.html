@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+{% block title %}
+Lista de Usuarios
+{% endblock %}
+{% block content %}
+<form id="form-usuarios" method="post">
+    {% csrf_token %}
+    <div>
+        <h2 class="text-center my-4">Usuarios del Sistema</h2>
+        <a href="{% url 'registrar_usuario' %}" class="btn btn-primary mb-4">
+            <i class="fas fa-plus-circle"></i> Nuevo Usuario
+        </a>
+        {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+            </div>
+        {% endfor %}
+        {% endif %}
+
+        <div class="table-responsive">
+            <table id="tabla-usuarios" class="table table-bordered table-striped">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Usuario</th>
+                        <th>Rol</th>
+                        <th>Persona Asociada</th>
+                        <th>Sucursal Asignada</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for usuario in usuarios %}
+                    <tr>
+                        <td>{{ usuario.id_usuario }}</td>
+                        <td>{{ usuario.nombre_usu }}</td>
+                        <td>{{ usuario.rol.nombre_rol }}</td>  <!-- Accede al nombre del rol -->
+                        <td>{{ usuario.persona.nombre }} {{ usuario.persona.apellido }}</td>  <!-- Datos de la persona -->
+                        <td>{{ usuario.sucursal.nombre_sucursal }}</td>
+                        <td>
+                            {% if usuario.estado %}
+                                <span class="badge bg-success">Activo</span>
+                            {% else %}
+                                <span class="badge bg-danger">Inactivo</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editarUsuarioModal"
+                                data-id="{{ usuario.id_usuario }}"
+                                data-nombre="{{ usuario.nombre_usu }}"
+                                data-rol="{{ usuario.rol.id_rol }}"
+                                data-sucursal="{{ usuario.sucursal.id_sucursal }}">
+                                Editar
+                            </button>
+                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#eliminarUsuarioModal"
+                                data-id="{{ usuario.id_usuario }}"
+                                data-nombre="{{ usuario.nombre_usu }}">
+                                Eliminar
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</form>
+<script>
+    $(document).ready(function() {
+        $('#tabla-usuarios').DataTable({
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json'
+            }
+        });
+    });
+</script>
+<!-- Modal de eliminar -->
+<div class="modal fade" id="eliminarUsuarioModal" tabindex="-1" aria-labelledby="eliminarUsuarioModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="POST" action="{% url 'eliminar_usuario' %}">
+        {% csrf_token %}
+        <input type="hidden" name="id_usuario" id="eliminar_id_usuario">
+        <div class="modal-content">
+          <div class="modal-header justify-content-center">
+            <h5 class="modal-title text-center">Eliminar Usuario</h5>
+            <button type="button" class="btn-close position-absolute end-0 me-3" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <div class="modal-body text-center">
+              <div class="mb-3">
+                  <label for="modal_nombre" class="form-label d-block fw-bold">Nombre de Usuario</label>
+                  <input type="text" class="form-control mx-auto text-center" style="max-width: 300px;" name="nombre_usu" id="eliminar_nombre" required readonly>
+              </div>
+              <p class="text-danger mt-3">¿Estás seguro de que deseas eliminar este usuario?</p>
+          </div>
+          <div class="modal-footer justify-content-center">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Eliminar</button>
+          </div>
+        </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal de edición -->
+<div class="modal fade" id="editarUsuarioModal" tabindex="-1" aria-labelledby="editarUsuarioModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="POST" action="{% url 'editar_usuario' %}">
+        {% csrf_token %}
+        <input type="hidden" name="id_usuario" id="modal_id_usuario">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Editar Usuario</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <div class="modal-body">
+              <div class="mb-3">
+                  <label for="modal_nombre" class="form-label">Nombre de Usuario</label>
+                  <input type="text" class="form-control" name="nombre_usu" id="modal_nombre" required>
+              </div>
+              <div class="mb-3">
+                  <label for="modal_rol" class="form-label">Rol</label>
+                  <select class="form-control" name="rol" id="modal_rol">
+                      {% for rol in roles %}
+                          <option value="{{ rol.id_rol }}">{{ rol.nombre_rol }}</option>
+                      {% endfor %}
+                  </select>
+              </div>
+              <div class="mb-3">
+                    <label for="sucursal">Sucursal</label>
+                    <select name="sucursal" class="form-control" required>
+                        {% for s in sucursales %}
+                            <option value="{{ s.id_sucursal }}"
+                                {% if s.id_sucursal == usuario.sucursal.id_sucursal %}selected{% endif %}>
+                                {{ s.nombre_sucursal }}
+                            </option>
+                        {% endfor %}
+                    </select>
+              </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+          </div>
+        </div>
+    </form>
+  </div>
+</div>
+<script>
+    const modal = document.getElementById('editarUsuarioModal');
+    modal.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        const id = button.getAttribute('data-id');
+        const nombre = button.getAttribute('data-nombre');
+        const rol = button.getAttribute('data-rol');
+        const sucursal = button.getAttribute('data-sucursal');
+
+        document.getElementById('modal_id_usuario').value = id;
+        document.getElementById('modal_nombre').value = nombre;
+        document.getElementById('modal_rol').value = rol;
+        document.getElementById('modal_sucursal').value = sucursal;
+    });
+</script>
+<script>
+    const eliminarModal = document.getElementById('eliminarUsuarioModal');
+    eliminarModal.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        const id = button.getAttribute('data-id');
+        const nombre = button.getAttribute('data-nombre');
+
+        document.getElementById('eliminar_id_usuario').value = id;
+        document.getElementById('eliminar_nombre').value = nombre;
+    });
+</script>
+<script>
+  // Espera 3 segundos y cierra automáticamente todas las alertas Bootstrap
+  setTimeout(function() {
+    var alertList = document.querySelectorAll('.alert');
+    alertList.forEach(function(alert) {
+      var bsAlert = new bootstrap.Alert(alert);
+      bsAlert.close();
+    });
+  }, 3000); // 3000 milisegundos = 3 segundos
+</script>
+
+
+{% endblock %}

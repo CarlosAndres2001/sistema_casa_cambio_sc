@@ -1,0 +1,295 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Reporte de Compras
+{% endblock %}
+
+{% block content %}
+<form id="form-compras" action="{% url 'lista_compra' %}" method="get">
+    {% csrf_token %}
+
+    <div>
+        <h2 class="text-center my-4">Reporte de Compras</h2>
+        <form method="get" class="mb-4">
+            <div class="row g-3">
+                <!-- Fila 1 -->
+                <div class="col-md-4">
+                    <label for="fecha_inicio">Fecha inicio</label>
+                    <input type="date" name="fecha_inicio" id="fecha_inicio" class="form-control" value="{{ fecha_inicio|default:today }}">
+                </div>
+                <div class="col-md-4">
+                    <label for="fecha_fin">Fecha fin</label>
+                    <input type="date" name="fecha_fin" id="fecha_fin" class="form-control" value="{{ fecha_fin|default:today }}">
+                </div>
+                <div class="col-md-4">
+                    <label for="moneda">Moneda</label>
+                    <select name="moneda" id="moneda" class="form-select">
+                        <option value="">Todas</option>
+                        {% for m in monedas %}
+                            <option value="{{ m.id_moneda }}" {% if m.id_moneda|stringformat:"s" == moneda_id %}selected{% endif %}>{{ m.nombre_moneda }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <!-- Fila 2 -->
+                <div class="col-md-4">
+                    <label for="usuario">Usuario</label>
+                    <select name="usuario" id="usuario" class="form-select">
+                        <option value="">Todos</option>
+                        {% for u in usuarios %}
+                            <option value="{{ u.id_usuario }}" {% if u.id_usuario|stringformat:"s" == usuario_id %}selected{% endif %}>{{ u.nombre_usu }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="sucursal">Sucursal</label>
+                    <select name="sucursal" id="sucursal" class="form-select">
+                        <option value="">Todas</option>
+                        {% for s in sucursales %}
+                            <option value="{{ s.id_sucursal }}" {% if s.id_sucursal|stringformat:"s" == sucursal %}selected{% endif %}>{{ s.nombre_sucursal }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-auto">Filtrar</button>
+                </div>
+            </div>
+        </form>
+        {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+            </div>
+        {% endfor %}
+        {% endif %}
+        <br><br>
+        <div class="table-responsive">
+            <table id="tabla-compras" class="table table-bordered table-striped">
+                <thead class="table-dark">
+                    <tr>
+                        <th></th>
+                        <th>Nro. Compra</th>
+                        <th>Fecha</th>
+                        <th>Usuario</th>
+                        <th>Sucursal</th>
+                        <th>Moneda</th>
+                        <th>Precio Compra</th>
+                        <th>Monto Total</th>
+                        <th>Total Ganado</th>
+                        <td>Acción</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for compra in compras %}
+                        <tr data-corte-100="{{ compra.corte_100 }}"
+                            data-corte-50="{{ compra.corte_50 }}"
+                            data-corte-20="{{ compra.corte_20 }}"
+                            data-corte-10="{{ compra.corte_10 }}"
+                            data-corte-5="{{ compra.corte_5 }}"
+                            data-corte-1="{{ compra.corte_1 }}">
+                            <td class="details-control">➕</td>
+                            <td>{{ compra.id_operacion_compra }}</td>
+                            <td>{{ compra.fecha }}</td>
+                            <td>{{ compra.usuario.nombre_usu }}</td>
+                            <td>{{ compra.sucursal.nombre_sucursal }}</td> 
+                            <td>{{ compra.id_moneda.nombre_moneda }}</td> 
+                            <td>{{ compra.precio_venta }}</td>
+                            <td>{{ compra.total_calculado }}</td>
+                            <td>{{ compra.total_ganado }}</td>
+                            <td>
+                                <a href="{% url 'ticket_compraa' compra.id_operacion_compra %}" class="btn btn-sm btn-secondary" target="_blank">
+                                    <i class="fas fa-print"></i>
+                                </a>
+                                <button type="button"
+                                    class="btn btn-danger"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#eliminarCompraModal"
+                                    data-id="{{ compra.id_operacion_compra }}">
+                                    <i class="fas fa-trash-alt"></i>    
+                                </button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+                <td>
+            </table>
+        </div>
+    </div>
+</form>
+<script>
+  // Espera 3 segundos y cierra automáticamente todas las alertas Bootstrap
+  setTimeout(function() {
+    var alertList = document.querySelectorAll('.alert');
+    alertList.forEach(function(alert) {
+      var bsAlert = new bootstrap.Alert(alert);
+      bsAlert.close();
+    });
+  }, 3000); // 3000 milisegundos = 3 segundos
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const fechaHoy = new Date().toISOString().split('T')[0];
+
+    const fechaInicio = document.getElementById("fecha_inicio");
+    const fechaFin = document.getElementById("fecha_fin");
+
+    if (!fechaInicio.value) {
+        fechaInicio.value = fechaHoy;
+    }
+    if (!fechaFin.value) {
+        fechaFin.value = fechaHoy;
+    }
+});
+</script>
+<!-- Modal de eliminar -->
+<div class="modal fade" id="eliminarCompraModal" tabindex="-1" aria-labelledby="eliminarCompraModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="POST" action="{% url 'eliminar_compra' %}">
+        {% csrf_token %}
+        <input type="hidden" name="id_compra" id="eliminar_id_compra">
+        <div class="modal-content">
+          <div class="modal-header justify-content-center">
+            <h5 class="modal-title text-center" id="eliminarCompraModalLabel">Eliminar Compra</h5>
+            <button type="button" class="btn-close position-absolute end-0 me-3" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <div class="modal-body text-center">
+              <div class="mb-3">
+                  <label class="form-label d-block fw-bold">Nro. Compra</label>
+                  <input type="text" class="form-control mx-auto text-center" style="max-width: 300px;" id="eliminar_nro" readonly>
+              </div>
+              <p class="text-danger mt-3">¿Estás seguro de que deseas eliminar esta compra?</p>
+              <div class="mb-3">
+                  <label class="form-label d-block fw-bold">Motivo de Anulación</label>
+                  <input type="text" class="form-control mx-auto text-center" style="max-width: 300px;" id="nota" name="nota" required>
+              </div>
+          </div>
+          <div class="modal-footer justify-content-center">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Eliminar</button>
+          </div>
+        </div>
+    </form>
+  </div>
+</div>
+
+<script>
+    document.getElementById('eliminarCompraModal').addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        const id = button.getAttribute('data-id');
+
+        document.getElementById('eliminar_id_compra').value = id;
+        document.getElementById('eliminar_nro').value = id;
+    });
+</script>
+</script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    $(document).ready(function () {
+        // Asegúrate de destruir la tabla solo una vez para evitar reinicialización
+        let table = $('#tabla-compras');
+
+        if ($.fn.dataTable.isDataTable('#tabla-compras')) {
+            table.DataTable().clear().destroy();  // Limpiar y destruir
+        }
+
+        // Inicializar la tabla
+        table = $('#tabla-compras').DataTable({
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json'
+            },
+            dom:
+                "<'row mb-3'" +
+                    "<'col-sm-6 d-flex align-items-center'f>" +  <!-- Buscador a la izquierda -->
+                    "<'col-sm-6 d-flex justify-content-end'B>" +  <!-- Botones a la derecha -->
+                ">" +
+                "<'row'<'col-sm-12'tr>>" +
+                "<'row mt-3'" +
+                    "<'col-sm-6'i>" +                         <!-- Información de registros -->
+                    "<'col-sm-6 d-flex justify-content-end'l>" + <!-- Selector al final a la derecha -->
+                ">" +
+                "<'row'" +
+                    "<'col-sm-12 text-end'p>" +              <!-- Paginación -->
+                ">",
+            buttons: [
+                {
+                    extend: 'copyHtml5',
+                    className: 'btn btn-secondary btn-sm me-1',
+                    text: 'Copiar'
+                },
+                {
+                    extend: 'excelHtml5',
+                    className: 'btn btn-success btn-sm me-1',
+                    text: 'Excel'
+                },
+                {
+                    extend: 'pdfHtml5',
+                    className: 'btn btn-danger btn-sm me-1',
+                    orientation: 'landscape',
+                    pageSize: 'A4',
+                    exportOptions: { columns: ':visible' },
+                    text: 'PDF'
+                },
+                {
+                    extend: 'print',
+                    className: 'btn btn-info btn-sm',
+                    text: 'Imprimir'
+                }
+            ],
+            lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Todos"]],
+        });
+
+        // Función para mostrar los detalles de los billetes
+        function format(rowData) {
+            return `
+                <table class="table table-sm table-bordered mb-0">
+                    <thead><tr><th>Billete</th><th>Cantidad</th></tr></thead>
+                    <tbody>
+                        ${rowData.corte100 > 0 ? `<tr><td>100</td><td>${rowData.corte100}</td></tr>` : ''}
+                        ${rowData.corte50 > 0 ? `<tr><td>50</td><td>${rowData.corte50}</td></tr>` : ''}
+                        ${rowData.corte20 > 0 ? `<tr><td>20</td><td>${rowData.corte20}</td></tr>` : ''}
+                        ${rowData.corte10 > 0 ? `<tr><td>10</td><td>${rowData.corte10}</td></tr>` : ''}
+                        ${rowData.corte5 > 0 ? `<tr><td>5</td><td>${rowData.corte5}</td></tr>` : ''}
+                        ${rowData.corte1 > 0 ? `<tr><td>1</td><td>${rowData.corte1}</td></tr>` : ''}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // Agregar funcionalidad de expandir detalles de billetes al hacer clic
+        $('#tabla-compras tbody').on('click', 'td.details-control', function () {
+            const tr = $(this).closest('tr');
+            const row = table.row(tr);
+
+            // Verificar si la fila ya está expandida
+            if (row.child.isShown()) {
+                row.child.hide();
+                tr.removeClass('shown');
+                $(this).html('➕'); // Cambiar icono a "+"
+            } else {
+                const corteData = {
+                    corte100: tr.data('corte-100'),
+                    corte50: tr.data('corte-50'),
+                    corte20: tr.data('corte-20'),
+                    corte10: tr.data('corte-10'),
+                    corte5: tr.data('corte-5'),
+                    corte1: tr.data('corte-1'),
+                };
+                row.child(format(corteData)).show();
+                tr.addClass('shown');
+                $(this).html('➖'); // Cambiar icono a "-"
+            }
+        });
+    });
+</script>
+<style>
+    td.details-control {
+        cursor: pointer;
+        text-align: center;
+        font-size: 18px;
+    }
+    tr.shown td.details-control {
+        font-weight: bold;
+        color: red;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% block title %}Lista de Sucursales{% endblock %}
+
+{% block content %}
+<h2 class="text-center my-4">Lista de Sucursales</h2>
+<a hidden="true" href="{% url 'crear_sucursal' %}" class="btn btn-primary">+ Nueva Sucursal</a>
+<br><br>
+<div class="container">
+    {% if messages %}
+      <div class="alert alert-success alert-dismissible fade show" role="alert">
+        {% for message in messages %}
+          {{ message }}
+        {% endfor %}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+      </div>
+      <script>
+        setTimeout(() => {
+            const alert = document.querySelector('.alert');
+            if (alert) {
+                alert.classList.remove('show');
+                alert.classList.add('hide');
+            }
+        }, 3000);
+      </script>
+    {% endif %}
+
+    <table class="table table-bordered table-striped text-center align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Dirección</th>
+                <th>Teléfono</th>
+                <th>Acción</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for suc in sucursales %}
+            <tr>
+                <td>{{ suc.id_sucursal }}</td>
+                <td>{{ suc.nombre_sucursal }}</td>
+                <td>{{ suc.direccion }}</td>
+                <td>{{ suc.telefono }}</td>
+                <td>
+                    <button type="button" class="btn btn-warning btn-sm"
+                        data-bs-toggle="modal"
+                        data-bs-target="#editarSucursalModal"
+                        data-id="{{ suc.id_sucursal }}"
+                        data-nombre="{{ suc.nombre_sucursal }}"
+                        data-direccion="{{ suc.direccion }}"
+                        data-telefono="{{ suc.telefono }}">
+                        Editar
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- MODAL EDITAR SUCURSAL -->
+<div class="modal fade" id="editarSucursalModal" tabindex="-1" aria-labelledby="editarSucursalModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="POST" action="{% url 'editar_sucursal' %}">
+      {% csrf_token %}
+      <input type="hidden" name="id_sucursal" id="editar_id_sucursal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editarSucursalModalLabel">Editar Sucursal</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+              <label class="form-label">Nombre</label>
+              <input type="text" class="form-control" name="nombre_sucursal" id="editar_nombre" required>
+          </div>
+          <div class="mb-3">
+              <label class="form-label">Dirección</label>
+              <input type="text" class="form-control" name="direccion" id="editar_direccion" required>
+          </div>
+          <div class="mb-3">
+              <label class="form-label">Teléfono</label>
+              <input type="text" class="form-control" name="telefono" id="editar_telefono" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  const editarModal = document.getElementById('editarSucursalModal');
+  editarModal.addEventListener('show.bs.modal', function (event) {
+    const button = event.relatedTarget;
+    document.getElementById('editar_id_sucursal').value = button.getAttribute('data-id');
+    document.getElementById('editar_nombre').value = button.getAttribute('data-nombre');
+    document.getElementById('editar_direccion').value = button.getAttribute('data-direccion');
+    document.getElementById('editar_telefono').value = button.getAttribute('data-telefono');
+  });
+</script>
+{% endblock %}

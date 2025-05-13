@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<form method="POST" action="{% url 'registrar_traspaso' %}">
+    {% csrf_token %}
+    <h2 class="text-center my-4">Registro de Traspasos</h2>
+    <div class="row mb-3">
+        <div class="col">
+            <label for="fecha_hora" class="form-label">Fecha y Hora</label>
+            <input type="datetime-local" name="fecha_hora" id="fecha_hora" class="form-control" required>
+        </div>
+        <div class="col">
+            <label for="moneda" class="form-label">Moneda</label>
+            <select name="moneda" class="form-control" required>
+                {% for moneda in monedas %}
+                    <option value="{{ moneda.id_moneda }}">{{ moneda.nombre_moneda }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col">
+            <label for="sucursal_destino" class="form-label">Sucursal de Destino</label>
+            <select name="sucursal_destino" class="form-control" required>
+                {% for sucursal in sucursales %}
+                    <option value="{{ sucursal.id_sucursal }}">{{ sucursal.nombre_sucursal }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col">
+            <label for="monto" class="form-label">Monto</label>
+            <input type="number" name="monto" step="0.01" class="form-control" required>
+        </div>
+        <div class="col">
+            <label for="observaciones" class="form-label">Observaciones</label>
+            <input type="text" name="observaciones" class="form-control">
+        </div>       
+    </div>
+
+    <div class="text-center">     
+        <button type="submit" class="btn btn-primary">Registrar Traspaso</button>
+        <a href="{% url 'registrar_egreso' %}" class="btn btn-danger me-2">Cancelar</a>
+    </div>
+</form>
+
+{% if messages %}
+<div class="mt-3">
+    {% for message in messages %}
+    <div class="alert {{ message.tags }} show">
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const ahora = new Date();
+        const offset = ahora.getTimezoneOffset() * 60000;
+        const fechaLocal = new Date(ahora.getTime() - offset);
+        const inputFecha = document.getElementById('fecha_hora');
+        if (inputFecha) {
+            inputFecha.value = fechaLocal.toISOString().slice(0, 16); // yyyy-MM-ddTHH:mm
+        }
+
+        // Ocultar alertas después de 5 segundos
+        const alert = document.querySelector('.alert');
+        if (alert) {
+            setTimeout(function () {
+                alert.classList.remove('show');
+                alert.style.display = "none";
+            }, 5000);
+        }
+    });
+</script>
+
+{% endblock %}

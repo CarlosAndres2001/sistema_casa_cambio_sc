@@ -1,0 +1,231 @@
+{% extends 'base.html' %}
+{% block title %}Reporte de Egresos{% endblock %}
+{% block content %}
+<form id="form-egresos" action="{% url 'reporte_egresos' %}" method="get">
+    {% csrf_token %}
+    <h2 class="text-center my-4">Reporte de Egresos</h2>
+        <form method="get" class="mb-4">
+            <div class="row g-3">
+                <!-- Fila 1 -->
+                <div class="col-md-4">
+                    <label for="fecha_inicio">Fecha inicio</label>
+                    <input type="date" name="fecha_inicio" id="fecha_inicio" class="form-control" value="{{ fecha_inicio|default:today }}">
+                </div>
+                <div class="col-md-4">
+                    <label for="fecha_fin">Fecha fin</label>
+                    <input type="date" name="fecha_fin" id="fecha_fin" class="form-control" value="{{ fecha_fin|default:today }}">
+                </div>
+                <div class="col-md-4">
+                    <label for="moneda">Moneda</label>
+                    <select name="moneda" id="moneda" class="form-select">
+                        <option value="">Todas</option>
+                        {% for m in monedas %}
+                            <option value="{{ m.id_moneda }}" {% if m.id_moneda|stringformat:"s" == moneda_id %}selected{% endif %}>{{ m.nombre_moneda }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Fila 2 -->
+                <div class="col-md-4">
+                    <label for="usuario">Usuario</label>
+                    <select name="usuario" id="usuario" class="form-select">
+                        <option value="">Todos</option>
+                        {% for u in usuarios %}
+                            <option value="{{ u.id_usuario }}" {% if u.id_usuario|stringformat:"s" == usuario_id %}selected{% endif %}>{{ u.nombre_usu }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="sucursal">Sucursal</label>
+                    <select name="sucursal" id="sucursal" class="form-select">
+                        <option value="">Todas</option>
+                        {% for s in sucursales %}
+                            <option value="{{ s.id_sucursal }}" {% if s.id_sucursal|stringformat:"s" == sucursal_id %}selected{% endif %}>{{ s.nombre_sucursal }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-auto">Filtrar</button>
+                </div>
+            </div>
+        </form>
+    {% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+        </div>
+    {% endfor %}
+    {% endif %}
+        <br><br>
+    <table class="table table-bordered table-striped" id="table-egresos">
+        <thead class="table-dark">
+            <tr>
+                <th>Nro. Egreso</th>
+                <th>Fecha y Hora</th>
+                <th>Usuario</th>
+                <th>Sucursal</th>
+                <th>Observaciones</th>
+                <th>Monto</th>
+                <th>Moneda</th>
+                <th>Acción</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for egreso in egresos %}
+            <tr>
+                <td>{{ egreso.id_egreso }}</td>
+                <td>{{ egreso.fecha_hora }}</td>
+                <td>{{ egreso.usuario.nombre_usu }}</td>
+                <td>{{ egreso.sucursal.nombre_sucursal}}</td>
+                <td>{{ egreso.observaciones }}</td>
+                <td>{{ egreso.monto }}</td>
+                <td>{{ egreso.moneda.nombre_moneda }}</td>
+                <td>
+                    <button type="button"
+                        class="btn btn-danger"
+                        data-bs-toggle="modal"
+                        data-bs-target="#eliminarEgresoModal"
+                        data-id="{{ egreso.id_egreso }}">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</form>
+<!-- Modal de eliminar -->
+<div class="modal fade" id="eliminarEgresoModal" tabindex="-1" aria-labelledby="eliminarEgresoModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="POST" action="{% url 'eliminar_egreso' %}">
+        {% csrf_token %}
+        <input type="hidden" name="id_egreso" id="eliminar_id_egreso">
+        <div class="modal-content">
+          <div class="modal-header justify-content-center">
+            <h5 class="modal-title text-center" id="eliminarEgresoModalLabel">Eliminar Egreso</h5>
+            <button type="button" class="btn-close position-absolute end-0 me-3" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <div class="modal-body text-center">
+              <div class="mb-3">
+                  <label class="form-label d-block fw-bold">Nro. Egreso</label>
+                  <input type="text" class="form-control mx-auto text-center" style="max-width: 300px;" id="eliminar_nro" readonly>
+              </div>
+              <p class="text-danger mt-3">¿Estás seguro de que deseas eliminar este egreso?</p>
+              <div class="mb-3">
+                  <label class="form-label d-block fw-bold">Motivo de Anulación</label>
+                  <input type="text" class="form-control mx-auto text-center" style="max-width: 300px;" id="nota" name="nota" required>
+              </div>
+          </div>
+          <div class="modal-footer justify-content-center">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Eliminar</button>
+          </div>
+        </div>
+    </form>
+  </div>
+</div>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const fechaHoy = new Date().toISOString().split('T')[0];
+
+    const fechaInicio = document.getElementById("fecha_inicio");
+    const fechaFin = document.getElementById("fecha_fin");
+
+    if (!fechaInicio.value) {
+        fechaInicio.value = fechaHoy;
+    }
+    if (!fechaFin.value) {
+        fechaFin.value = fechaHoy;
+    }
+});
+</script>
+<script>
+  // Espera 3 segundos y cierra automáticamente todas las alertas Bootstrap
+  setTimeout(function() {
+    var alertList = document.querySelectorAll('.alert');
+    alertList.forEach(function(alert) {
+      var bsAlert = new bootstrap.Alert(alert);
+      bsAlert.close();
+    });
+  }, 3000); // 3000 milisegundos = 3 segundos
+</script>
+<script>
+    document.getElementById('eliminarEgresoModal').addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        const id = button.getAttribute('data-id');
+
+        document.getElementById('eliminar_id_egreso').value = id;
+        document.getElementById('eliminar_nro').value = id;
+    });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    $(document).ready(function () {
+        // Asegúrate de destruir la tabla solo una vez para evitar reinicialización
+        let table = $('#table-egresos');
+
+        if ($.fn.dataTable.isDataTable('#table-traspasos')) {
+            table.DataTable().clear().destroy();  // Limpiar y destruir
+        }
+
+        // Inicializar la tabla
+        table = $('#table-egresos').DataTable({
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json'
+            },
+            dom:
+                "<'row mb-3'" +
+                    "<'col-sm-6 d-flex align-items-center'f>" +  <!-- Buscador a la izquierda -->
+                    "<'col-sm-6 d-flex justify-content-end'B>" +  <!-- Botones a la derecha -->
+                ">" +
+                "<'row'<'col-sm-12'tr>>" +
+                "<'row mt-3'" +
+                    "<'col-sm-6'i>" +                         <!-- Información de registros -->
+                    "<'col-sm-6 d-flex justify-content-end'l>" + <!-- Selector al final a la derecha -->
+                ">" +
+                "<'row'" +
+                    "<'col-sm-12 text-end'p>" +              <!-- Paginación -->
+                ">",
+            buttons: [
+                {
+                    extend: 'copyHtml5',
+                    className: 'btn btn-secondary btn-sm me-1',
+                    text: 'Copiar'
+                },
+                {
+                    extend: 'excelHtml5',
+                    className: 'btn btn-success btn-sm me-1',
+                    text: 'Excel'
+                },
+                {
+                    extend: 'pdfHtml5',
+                    className: 'btn btn-danger btn-sm me-1',
+                    orientation: 'landscape',
+                    pageSize: 'A4',
+                    exportOptions: { columns: ':visible' },
+                    text: 'PDF'
+                },
+                {
+                    extend: 'print',
+                    className: 'btn btn-info btn-sm',
+                    text: 'Imprimir'
+                }
+            ],
+            lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Todos"]],
+        });
+
+    });
+</script>
+<style>
+    td.details-control {
+        cursor: pointer;
+        text-align: center;
+        font-size: 18px;
+    }
+    tr.shown td.details-control {
+        font-weight: bold;
+        color: red;
+    }
+</style>
+{% endblock %}

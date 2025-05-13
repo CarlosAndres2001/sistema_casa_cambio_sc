@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block title %}Registro de Sucursales{% endblock %}
+
+{% block content %}
+<h2 class="text-center my-4">Crear Nueva Sucursal</h2>
+
+<form method="POST" class="mx-auto" style="max-width: 600px;">
+    {% csrf_token %}
+    <div class="mb-3">
+        <label class="form-label">Nombre de la Sucursal</label>
+        <input type="text" class="form-control" name="nombre_sucursal" required>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Dirección</label>
+        <input type="text" class="form-control" name="direccion" required>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Teléfono</label>
+        <input type="text" class="form-control" name="telefono" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Registrar</button>
+    <a href="{% url 'lista_sucursal' %}" class="btn btn-primary">Ver Sucursales Registradas</a>
+</form>
+
+{% if messages %}
+  <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
+    {% for message in messages %}
+      {{ message }}
+    {% endfor %}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+  <script>
+      setTimeout(() => {
+          const alert = document.querySelector('.alert');
+          if (alert) {
+              alert.classList.remove('show');
+              alert.classList.add('hide');
+          }
+      }, 3000);
+  </script>
+{% endif %}
+{% endblock %}
